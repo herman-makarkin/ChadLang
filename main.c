@@ -6,6 +6,7 @@
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
+#include "compiler.h"
 
 static void repl()
 {
