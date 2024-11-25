@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "scanner.h"
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
@@ -68,6 +69,10 @@ int main (int argc, const char* argv[])
   Chunk chunk;
   initChunk(&chunk);
 
+  // char test[] = "print 2 + 3;";
+  
+
+  compile(readFile("test.chad"), &chunk);
   // int constant = addConstant(&chunk, 1.2);
   // writeChunk(&chunk, OP_CONSTANT, 123);
   // writeChunk(&chunk, constant, 123);

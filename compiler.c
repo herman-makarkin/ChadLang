@@ -268,4 +268,7 @@ bool compile(const char* source, Chunk* chunk)
   consume(TOKEN_EOF, "Expect end of expression.");
   endCompiler();
   return !parser.hadError;
+  // advance();
+  // expression();
+  // consume(TOKEN_EOF, "Expect end of expression.");
 }

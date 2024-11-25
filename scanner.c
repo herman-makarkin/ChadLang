@@ -26,7 +26,16 @@ static TokenType checkKeyword(int start, int length,
 void initScanner(const char* source)
 {
   int line = -1;
+  scanner.start = source;
+  scanner.current = source;
   for (;;) {
+    printf("%d", scanner.line);
+    if (*scanner.current == ';') {
+      printf("Hello ma bois");
+      break;
+    }
+      printf("Hello ma bois");
+      printf("%c", *scanner.current);
     Token token = scanToken();
     if (token.line != line) {
       printf("%4d ", token.line);
@@ -76,14 +85,12 @@ static TokenType identifierType()
   return TOKEN_IDENTIFIER;
 }
 
-
 static bool isAlpha(char c)
 {
   return (c >= 'a' && c <= 'z') ||
          (c >= 'A' && c <= 'Z') ||
           c == '_';
 }
-
 
 static bool isDigit(char c)
 {
@@ -194,7 +201,6 @@ static Token string()
   advance();
   return makeToken(TOKEN_STRING);
 }
-
 
 Token scanToken()
 {
