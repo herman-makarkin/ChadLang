@@ -51,6 +51,7 @@ static Chunk* currentChunk()
 
 static void errorAt(Token* token, const char* message)
 {
+  if (parser.panicMode) return;
   parser.panicMode = true;
   fprintf(stderr, "[line %d] Error", token->line);
 
@@ -259,10 +260,26 @@ bool compile(const char* source, Chunk* chunk)
 {
   initScanner(source);
   compilingChunk = chunk;
-
   parser.hadError = false;
   parser.panicMode = false;
 
+  // int line = -1;
+  // for (;;) {
+  //   Token token = scanToken();
+  //   if (token.line != line) {
+  //     printf("%4d ", token.line);
+  //     line = token.line;
+  //   } else {
+  //     printf("   | ");
+  //   }
+  //   printf("%2d '%.*s'\n", token.type, token.length, token.start); 
+  //   if (token.type == TOKEN_EOF) break;
+  // }
+  // compilingChunk = chunk;
+  //
+  // parser.hadError = false;
+  // parser.panicMode = false;
+  //
   advance();
   expression();
   consume(TOKEN_EOF, "Expect end of expression.");

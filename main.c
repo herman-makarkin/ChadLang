@@ -64,10 +64,16 @@ static void runFile(const char* path)
 int main (int argc, const char* argv[])
 {
   initVM();
-
-  Chunk chunk;
-  initChunk(&chunk);
-
+  // Chunk chunk;
+  // initChunk(&chunk);
+if (argc == 1) {
+    repl();
+  } else if (argc == 2) {
+    runFile(argv[1]);
+  } else {
+    fprintf(stderr, "Usage: ChadLang [path]\n");
+    exit(64);
+  }
   // int constant = addConstant(&chunk, 1.2);
   // writeChunk(&chunk, OP_CONSTANT, 123);
   // writeChunk(&chunk, constant, 123);
@@ -90,7 +96,9 @@ int main (int argc, const char* argv[])
   // disassembleChunk(&chunk, "test chunk");
   //
   // interpret(&chunk);
+
+  // runFile("/home/godfather/Desktop/ChadLang/chad.chad");
   freeVM();
-  freeChunk(&chunk);
+  // freeChunk(&chunk);
   return 0;
 }
