@@ -29,6 +29,7 @@ static void runtimeError(const char* format, ...) {
   int line = vm.chunk->lines[instruction];
   fprintf(stderr, "[line %d] in script\n", line);
   resetStack();
+  vm.objects = NULL;
 }
 
 void initVM()
@@ -39,6 +40,7 @@ void initVM()
 
 void freeVM()
 {
+  freeObjects();
   freeDict(&vm.strings);
 }
 

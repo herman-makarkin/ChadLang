@@ -7,12 +7,15 @@
 #include "dictionary.h"
 #include "vm.h"
 
-
-#define ALLOCATE_OBJ(type, objectType) (type*)allocateObject(sizeof(type), objectType)
+#define ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateObject(sizeof(type), objectType)
 
 static Obj* allocateObject(size_t size, ObjType type) {
   Obj* object = (Obj*)reallocate(NULL, 0, size);
   object->type = type;
+
+  object->next = vm.objects;
+  vm.objects = object;
   return object;
 }
 
@@ -25,7 +28,6 @@ static ObjString* allocateString(char* chars, int length,
   dictSet(&vm.strings, string, NIL_VAL);
   return string;
 }
-ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 
 static uint32_t hashString(const char* key, int length) {
   uint32_t hash = 2166136261u;
@@ -39,8 +41,7 @@ static uint32_t hashString(const char* key, int length) {
 ObjString* takeString(char* chars, int length) {
   uint32_t hash = hashString(chars, length);
 
-  ObjString* interned = dictFindString(&vm.strings, chars, length,
-                                        hash);
+  ObjString* interned = dictFindString(&vm.strings, chars, length, hash);
   if (interned != NULL) {
     FREE_ARRAY(char, chars, length + 1);
     return interned;

@@ -14,6 +14,7 @@ typedef struct
   Value stack[STACK_MAX];
   Value* stackTop;
   Dictionary strings;
+  Obj* objects;
 } VM;
 
 typedef enum
