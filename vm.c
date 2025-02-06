@@ -35,12 +35,14 @@ static void runtimeError(const char* format, ...) {
 void initVM()
 {
   resetStack();
+  initDict(&vm.globals);
   initDict(&vm.strings);
 }
 
 void freeVM()
 {
   freeObjects();
+  freeDict(&vm.globals);
   freeDict(&vm.strings);
 }
 
@@ -83,6 +85,7 @@ static InterpretResult run()
 {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op) \
     do { \
       if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -155,9 +158,25 @@ static InterpretResult run()
         push(constant);
         break;
       }
+      case OP_DEFINE_GLOBAL: {
+        ObjString* name = READ_STRING();
+        dictSet(&vm.globals, name, peek(0));
+        pop();
+        break;
+      }
       case OP_NIL: push(NIL_VAL); break;
       case OP_TRUE: push(BOOL_VAL(true)); break;
       case OP_POP: pop(); break;
+      case OP_GET_GLOBAL: {
+      ObjString* name = READ_STRING();
+      Value value;
+      if (!dictGet(&vm.globals, name, &value)) {
+        runtimeError("Undefined variable '%s'.", name->chars);
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      push(value);
+      break;
+    }
       case OP_FALSE: push(BOOL_VAL(false)); break;
       case OP_EQUAL: {
         Value b = pop();
@@ -170,6 +189,7 @@ static InterpretResult run()
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 }
 

@@ -138,6 +138,20 @@ static uint8_t makeConstant(Value value)
   return (uint8_t)constant;
 }
 
+static uint8_t identifierConstant(Token* name) {
+  return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static uint8_t parseVariable(const char* errorMessage) {
+  consume(TOKEN_IDENTIFIER, errorMessage);
+  return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint8_t global) {
+  emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+
 static void emitConstant(Value value)
 {
   emitBytes(OP_CONSTANT, makeConstant(value));
@@ -154,6 +168,20 @@ static void endCompiler()
 }
 
 static void expression();
+
+static void varDeclaration() {
+  uint8_t global = parseVariable("Expect variable name.");
+
+  if (match(TOKEN_EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_NIL);
+  }
+  consume(TOKEN_SEMICOLON,
+          "Expect ';' after variable declaration.");
+
+  defineVariable(global);
+}
 
 static void expressionStatement() {
   expression();
@@ -195,7 +223,11 @@ static void statement();
 static void declaration();
 
 static void declaration() {
-  statement();
+  if (match(TOKEN_VAR)) {
+    varDeclaration();
+  } else {
+    statement();
+  }
 
   if (parser.panicMode) synchronize();
 }
@@ -277,6 +309,15 @@ static void string()
                                   parser.previous.length - 2)));
 }
 
+static void namedVariable(Token name) {
+  uint8_t arg = identifierConstant(&name);
+  emitBytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable() {
+  namedVariable(parser.previous);
+}
+
 static void number()
 {
   double value = strtod(parser.previous.start, NULL);
@@ -318,6 +359,7 @@ ParseRule rules[] = {
   [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+  [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
