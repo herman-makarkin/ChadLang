@@ -100,6 +100,17 @@ static void consume(TokenType type, const char* message)
   errorAtCurrent(message);
 }
 
+static bool check(TokenType type) {
+  return parser.current.type == type;
+}
+
+static bool match(TokenType type) {
+  if (!check(type)) return false;
+  advance();
+  return true;
+}
+
+
 static void emitByte(uint8_t byte)
 {
   writeChunk(currentChunk(), byte, parser.previous.line);
@@ -143,6 +154,26 @@ static void endCompiler()
 }
 
 static void expression();
+
+static void printStatement() {
+  expression();
+  consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+  emitByte(OP_PRINT);
+}
+
+static void statement();
+static void declaration();
+
+static void declaration() {
+  statement();
+}
+
+static void statement() {
+  if (match(TOKEN_PRINT)) {
+    printStatement();
+  }
+}
+
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
@@ -290,27 +321,10 @@ bool compile(const char* source, Chunk* chunk)
   compilingChunk = chunk;
   parser.hadError = false;
   parser.panicMode = false;
-
-  // int line = -1;
-  // for (;;) {
-  //   Token token = scanToken();
-  //   if (token.line != line) {
-  //     printf("%4d ", token.line);
-  //     line = token.line;
-  //   } else {
-  //     printf("   | ");
-  //   }
-  //   printf("%2d '%.*s'\n", token.type, token.length, token.start); 
-  //   if (token.type == TOKEN_EOF) break;
-  // }
-  // compilingChunk = chunk;
-  //
-  // parser.hadError = false;
-  // parser.panicMode = false;
-  //
   advance();
-  expression();
-  consume(TOKEN_EOF, "Expect end of expression.");
+  while (!match(TOKEN_EOF)) {
+    declaration();
+  }
   endCompiler();
   return !parser.hadError;
 }
