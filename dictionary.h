@@ -18,7 +18,7 @@ typedef struct {
 void initDict(Dictionary* dict);
 void freeDict(Dictionary* dict);
 bool dictSet(Dictionary* dict, ObjString* key, Value value);
-bool tableDelete(Dictionary* dict, ObjString* key);
+bool dictDelete(Dictionary* dict, ObjString* key);
 bool dictGet(Dictionary* dict, ObjString* key, Value* value);
 void dictAddAll(Dictionary* from, Dictionary* to);
 ObjString* dictFindString(Dictionary* dict, const char* chars,

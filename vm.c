@@ -178,6 +178,15 @@ static InterpretResult run()
       break;
     }
       case OP_FALSE: push(BOOL_VAL(false)); break;
+      case OP_SET_GLOBAL: {
+        ObjString* name = READ_STRING();
+        if (dictSet(&vm.globals, name, peek(0))) {
+          dictDelete(&vm.globals, name); 
+          runtimeError("Undefined variable '%s'.", name->chars);
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      }
       case OP_EQUAL: {
         Value b = pop();
         Value a = pop();
