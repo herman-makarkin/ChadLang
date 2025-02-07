@@ -25,28 +25,9 @@ static TokenType checkKeyword(int start, int length,
 
 void initScanner(const char* source)
 {
-  int line = -1;
   scanner.start = source;
   scanner.current = source;
-  for (;;) {
-    printf("%d", scanner.line);
-    if (*scanner.current == ';') {
-      printf("Hello ma bois");
-      break;
-    }
-      printf("Hello ma bois");
-      printf("%c", *scanner.current);
-    Token token = scanToken();
-    if (token.line != line) {
-      printf("%4d ", token.line);
-      line = token.line;
-    } else {
-      printf("   | ");
-    }
-    printf("%2d '%.*s'\n", token.type, token.length, token.start); 
-
-    if (token.type == TOKEN_EOF) break;
-  }
+  scanner.line = 1;
 }
 
 static TokenType identifierType()
@@ -78,7 +59,7 @@ static TokenType identifierType()
         }
       }
       break;
-    case 'v': return checkKeyword(1, 2, "ar", TOKEN_VAR);
+    case 'l': return checkKeyword(1, 2, "et", TOKEN_VAR);
     case 'w': return checkKeyword(1, 4, "hile", TOKEN_WHILE);
   }
 

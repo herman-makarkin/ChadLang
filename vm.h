@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "dictionary.h"
 
 #define STACK_MAX 256
 
@@ -12,6 +13,9 @@ typedef struct
   uint8_t* ip;
   Value stack[STACK_MAX];
   Value* stackTop;
+  Dictionary strings;
+  Dictionary globals;
+  Obj* objects;
 } VM;
 
 typedef enum
@@ -20,6 +24,8 @@ typedef enum
   INTERPRET_COMPILE_ERROR,
   INTERPRET_RUNTIME_ERROR
 } InterpretResult;
+
+extern VM vm;
 
 
 void initVM();
