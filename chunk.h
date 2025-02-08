@@ -27,7 +27,9 @@ typedef enum
   OP_GET_LOCAL,
   OP_SET_LOCAL,
   OP_GET_CONST,
-  OP_SET_CONST
+  OP_SET_CONST,
+  OP_JUMP,
+  OP_JUMP_IF_FALSE
 } OpCode;
 
 typedef struct
