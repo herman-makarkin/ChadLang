@@ -14,6 +14,7 @@ typedef struct
 {
   Token current;
   Token previous;
+  Token beforeLast;
   bool hadError;
   bool panicMode;
 } Parser;
@@ -95,6 +96,7 @@ static void errorAtCurrent(const char* message)
 
 static void advance()
 {
+  parser.beforeLast = parser.previous;
   parser.previous = parser.current;
 
   for (;;) {
@@ -166,6 +168,9 @@ static int resolveLocal(Compiler* compiler, Token* name) {
   for (int i = compiler->localCount - 1; i >= 0; i--) {
     Local* local = &compiler->locals[i];
     if (identifiersEqual(name, &local->name)) {
+      if (local->depth == -1) {
+        error("Connot read local variable in its own initializer.");
+      }
       return i;
     }
   }
@@ -174,7 +179,7 @@ static int resolveLocal(Compiler* compiler, Token* name) {
 }
 
 static void addLocal(Token name) {
-  if (current->localCount ==  UINT8_COUNT) {
+  if (current->localCount >=  UINT8_COUNT) {
     error("Too many local variables in function.");
     return;
   }
@@ -188,6 +193,11 @@ static void declareVariable() {
   if (current->scopeDepth == 0) return;
 
   Token* name = &parser.previous;
+  TokenType type = parser.beforeLast.type;
+  
+  // if (type == TOKEN_CONST) {
+  //
+  // }
 
   for (int i = current->localCount - 1; i >= 0; i--) {
     Local* local = &current->locals[i];
@@ -211,10 +221,16 @@ static uint8_t parseVariable(const char* errorMessage) {
   return identifierConstant(&parser.previous);
 }
 
+static void markInitialized() {
+  current->locals[current->localCount - 1].depth = current->scopeDepth;
+}
+
 static void defineVariable(uint8_t global) {
   if (current->scopeDepth > 0) {
+    markInitialized();
     return;
   }
+
   emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
@@ -291,6 +307,7 @@ static void synchronize() {
     switch (parser.current.type) {
       case TOKEN_FUN:
       case TOKEN_VAR:
+      case TOKEN_CONST:
       case TOKEN_FOR:
       case TOKEN_IF:
       case TOKEN_WHILE:
@@ -308,11 +325,10 @@ static void synchronize() {
 
 
 static void statement();
-static void declaration();
 static void block();
 
 static void declaration() {
-  if (match(TOKEN_VAR)) {
+  if (match(TOKEN_VAR) || match(TOKEN_CONST)) {
     varDeclaration();
   } else {
     statement();
@@ -345,8 +361,7 @@ static void literal(bool canAssign) {
   }
 }
 
-static void parsePrecedence(Precedence precedence)
-{
+static void parsePrecedence(Precedence precedence) {
   advance();
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == NULL) {
@@ -406,8 +421,7 @@ static void grouping(bool canAssign) {
 }
 
 static void string(bool canAssign) {
-  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
-                                  parser.previous.length - 2)));
+  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 static void namedVariable(Token name, bool canAssign) {
@@ -494,6 +508,7 @@ ParseRule rules[] = {
   [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_TRUE]          = {literal,     NULL,   PREC_NONE},
   [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_CONST]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
@@ -518,7 +533,4 @@ bool compile(const char* source, Chunk* chunk)
   }
   endCompiler();
   return !parser.hadError;
-  // advance();
-  // expression();
-  // consume(TOKEN_EOF, "Expect end of expression.");
 }

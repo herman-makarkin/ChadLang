@@ -1,1 +1,9 @@
+{
+  let x = 2;
+  print x * 2;
+}
+
+let x = "random string";
+
 print 2 + 2;
+print x;
