@@ -64,6 +64,7 @@ static Chunk* currentChunk()
   return compilingChunk;
 }
 
+static void parsePrecedence(Precedence precedence);
 
 static void errorAt(Token* token, const char* message)
 {
@@ -241,12 +242,6 @@ static void defineVariable(uint8_t global) {
   emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
-
-static void emitConstant(Value value)
-{
-  emitBytes(OP_CONSTANT, makeConstant(value));
-}
-
 static void patchJump(int offset) {
   int jump = currentChunk()->count - offset - 2;
 
@@ -256,6 +251,22 @@ static void patchJump(int offset) {
 
   currentChunk()->code[offset] = (jump >> 8) & 0xff;
   currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
+
+static void and_(bool canAssign) {
+  int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+  emitByte(OP_POP);
+  parsePrecedence(PREC_AND);
+
+  patchJump(endJump);
+}
+
+
+static void emitConstant(Value value)
+{
+  emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
 static void initCompiler(Compiler* compiler) {
@@ -389,7 +400,6 @@ static void statement() {
 }
 
 static ParseRule* getRule(TokenType type);
-static void parsePrecedence(Precedence precedence);
 
 static void literal(bool canAssign) {
   switch (parser.previous.type) {
@@ -503,6 +513,17 @@ static void unary(bool canAssign) {
   }
 }
 
+static void or_(bool canAssign) {
+  int elseJump = emitJump(OP_JUMP_IF_FALSE);
+  int endJump = emitJump(OP_JUMP);
+
+  patchJump(elseJump);
+  emitByte(OP_POP);
+
+  parsePrecedence(PREC_OR);
+  patchJump(endJump);
+}
+
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
@@ -527,6 +548,7 @@ ParseRule rules[] = {
   [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
   [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
+  [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
@@ -540,7 +562,7 @@ ParseRule rules[] = {
   [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
   [TOKEN_NIL]           = {literal,     NULL,   PREC_NONE},
-  [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
   [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},

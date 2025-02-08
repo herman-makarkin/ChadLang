@@ -6,8 +6,10 @@
 let x = "random string";
 x = 5;
 
-if (x == 5) {
+if (x > x) {
   print x + x;
+} else {
+  print x * x;
 }
 
 print 2 + 2;
