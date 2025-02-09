@@ -29,6 +29,7 @@ typedef enum
   OP_GET_CONST,
   OP_SET_CONST,
   OP_JUMP,
+  OP_LOOP,
   OP_JUMP_IF_FALSE
 } OpCode;
 

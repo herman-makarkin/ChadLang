@@ -171,6 +171,11 @@ static InterpretResult run()
         pop();
         break;
       }
+      case OP_LOOP: {
+        uint16_t offset = READ_SHORT();
+        vm.ip -= offset;
+        break;
+      }
       case OP_SET_LOCAL: {
         uint8_t slot = READ_BYTE();
         vm.stack[slot] = peek(0);
