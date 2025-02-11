@@ -10,11 +10,9 @@ while (x < 10) {
   x = x + 1;
 }
 
-if (x > x) {
-  print x + x;
-} else {
-  print x * x;
+fn fib(n) {
+  if (n < 2) return n;
+  return fib(n - 2) + fib(n - 1);
 }
 
-print 2 + 2;
-print x;
+print fib(15);
