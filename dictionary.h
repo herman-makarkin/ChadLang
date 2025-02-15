@@ -20,6 +20,8 @@ void freeDict(Dictionary* dict);
 bool dictSet(Dictionary* dict, ObjString* key, Value value);
 bool dictDelete(Dictionary* dict, ObjString* key);
 bool dictGet(Dictionary* dict, ObjString* key, Value* value);
+bool dictCheck(Dictionary* dict, ObjString* key);
+bool dictAdd(Dictionary* dict, ObjString* key);
 void dictAddAll(Dictionary* from, Dictionary* to);
 ObjString* dictFindString(Dictionary* dict, const char* chars,
                            int length, uint32_t hash);

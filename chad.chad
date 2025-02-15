@@ -3,7 +3,12 @@
   print x * 2;
 }
 
-let x = 5;
+const x = 5;
+
+x = 8;
+
+let xa = 5;
+xa = 5;
 
 while (x < 10) {
   print x;

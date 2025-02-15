@@ -4,6 +4,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "dictionary.h"
 #include "scanner.h"
 
 #ifdef DEBUG_PRINT_CODE
@@ -17,6 +18,7 @@ typedef struct
   Token beforeLast;
   bool hadError;
   bool panicMode;
+  Dictionary constants;
 } Parser;
 
 typedef enum
@@ -224,10 +226,6 @@ static void declareVariable() {
 
   Token* name = &parser.previous;
   TokenType type = parser.beforeLast.type;
-  
-  // if (type == TOKEN_CONST) {
-  //
-  // }
 
   for (int i = current->localCount - 1; i >= 0; i--) {
     Local* local = &current->locals[i];
@@ -359,16 +357,41 @@ static void endScope() {
 }
 
 static void varDeclaration() {
-  uint8_t global = parseVariable("Expect variable name.");
+  uint8_t global = parseVariable("Expect constant name.");
+  Token constName = parser.previous;
 
   if (match(TOKEN_EQUAL)) {
-    expression();
+    if(!dictCheck(&parser.constants, copyString(constName.start, constName.length))) {
+      expression();
+    } else {
+      error("There is already a constant with this name");
+    }
   } else {
     emitByte(OP_NIL);
   }
   consume(TOKEN_SEMICOLON,
           "Expect ';' after variable declaration.");
 
+  defineVariable(global);
+}
+
+static void constDeclaration() {
+  uint8_t global = parseVariable("Expect variable name.");
+  Token constName = parser.previous;
+
+  if (match(TOKEN_EQUAL)) {
+    if(!dictCheck(&parser.constants, copyString(constName.start, constName.length))) {
+      expression();
+    } else {
+      error("There is already a constant with this name");
+    }
+  } else {
+    emitByte(OP_NIL);
+  }
+  consume(TOKEN_SEMICOLON,
+          "Expect ';' after constant declaration.");
+
+  dictAdd(&parser.constants, copyString(constName.start, constName.length));
   defineVariable(global);
 }
 
@@ -494,8 +517,10 @@ static void funDeclaration() {
 static void declaration() {
   if (match(TOKEN_FUN)) {
     funDeclaration();
-  } else if (match(TOKEN_VAR) || match(TOKEN_CONST)) {
+  } else if (match(TOKEN_VAR) ) {
     varDeclaration();
+  } else if (match(TOKEN_CONST)){
+    constDeclaration();
   } else {
     statement();
   }
@@ -612,8 +637,12 @@ static void namedVariable(Token name, bool canAssign) {
     setOp = OP_SET_GLOBAL;
   }
   if (canAssign && match(TOKEN_EQUAL)) {
-    expression();
-    emitBytes(setOp, (uint8_t)arg);
+    // if(!dictCheck(&parser.constants, copyString(name.start, name.length))) {
+      expression();
+      emitBytes(setOp, (uint8_t)arg);
+    // } else {
+    //   error("There is already a constant with this name");
+    // }
   } else {
     emitBytes(getOp, (uint8_t)arg);
   }
@@ -677,7 +706,6 @@ ParseRule rules[] = {
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},

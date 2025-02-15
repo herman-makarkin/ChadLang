@@ -38,6 +38,13 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key)
   }
 }
 
+bool dictCheck(Dictionary* dict, ObjString* key) {
+  if (dict->count == 0) return false;
+  Entry* entry = findEntry(dict->entries, dict->capacity, key);
+  if (entry->key == NULL) return false;
+  return true;
+}
+
 bool dictGet(Dictionary* dict, ObjString* key, Value* value) {
   if (dict->count == 0) return false;
 
@@ -68,6 +75,19 @@ static void adjustCapacity(Dictionary* dict, int capacity) {
 
   dict->entries = entries;
   dict->capacity = capacity;
+}
+
+bool dictAdd(Dictionary* dict, ObjString* key) {
+  if (dict->count + 1 > dict->capacity * DICTIONARY_MAX_LOAD) {
+    int capacity = GROW_CAPACITY(dict->capacity);
+    adjustCapacity(dict, capacity);
+  }
+  Entry* entry = findEntry(dict->entries, dict->capacity, key);
+  bool isNewKey = entry->key == NULL;
+  if (isNewKey && IS_NIL(entry->value)) dict->count++;
+
+  entry->key = key;
+  return isNewKey;
 }
 
 bool dictSet(Dictionary* dict, ObjString* key, Value value) {
